@@ -207,7 +207,7 @@ object KNNTester {
 
       //paramMap.toSeq.filter(_.param.name == "maxBins")(0).value
 
-      knn.train()
+      knn.train(sc)
 
       /*println(knn.predict(testData.first().features))
     val labelAndPreds = testData.map{
@@ -245,7 +245,16 @@ object KNNTester {
       //val labelAndPreds = knn.getPredAndLabels()
 //      val predsAndLabelsKnn = knn.getPredAndLabelsKNN()
       
-      val predsAndLabelsKnnLsh = knn.getPredAndLabelsKNNLsh()
+      val predsAndLabelsLsh = knn.getPredAndLabelsLsh()
+      println(predsAndLabelsLsh.filter(r => r._1 != r._2).size)
+//      val predsAndLabelsKnnLsh = knn.getPredAndLabelsKNNLsh()
+//      println("still alive 1")
+//      val err = predsAndLabelsKnnLsh.filter(f => f._1 != f._2).count()
+//      println("still alive 2")
+//      println("here is the error " + err)
+      
+      
+      
 //      val metrics = new MulticlassMetrics(predsAndLabelsKnnLsh)
 //      println("Confusion matrix:")
 //      println(metrics.confusionMatrix)
@@ -279,7 +288,7 @@ object KNNTester {
       
       //println(labelAndPreds)
       //println(labelAndPreds.filter(r => r._1 != r._2).count())
-//      val testErrKNN = predsAndLabelsKnn.filter(r => r._1 != r._2).length * 1.0 / testData.count()
+//      val testErrKNN = predsAndLabelsKnn.filter(r => r._1 != r._2).length// * 1.0 / testData.count()
 //      println("here it is: " + testErrKNN)
       
 //      val testErr = labelAndPreds.filter(r => r._1 != r._2).length * 1.0 / testData.count()
