@@ -179,7 +179,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
       //hashedRuleset.foreach(f => println(f.toString()))
         
       val tmpAnnRuleModel =
-        new com.github.karlhigley.spark.neighbors.ANN(dimensions = 1000, measure = "jaccard")
+        new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
           .setTables(4)
           .setSignatureLength(128)
           .setPrimeModulus(739)
@@ -190,12 +190,18 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
         (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
       println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    4") 
       val retrievedRules = tmpAnnRuleModel.neighbors(hashedRulesToRetrieve, rno)
-      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    5")
+      retrievedRules.cache()
+      rulesToConsider.cache()
+      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    5 retrules " + retrievedRules.count() + " rtocons " + rulesToConsider.count() )
       val zer = retrievedRules.map(r => (r._1, r._2.map(f => f._1))).flatMap(f => f._2.map { x => (x, f._1) })
+      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    zer")
+      val gher = zer
       .join(rulesToConsider).map(f => (f._2._1, f._2._2._1._2)).groupByKey()
+      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    gher")
+      val rel = gher
       .map(f => f._2.toList.groupBy(identity).maxBy(_._2.size)._1).collect().toList.groupBy(identity).maxBy(_._2.size)._1
-      
-      predAndLbls = predAndLbls ::: List((zer , testWithIndex.filter(f => f._1 == i).first()._2.label))
+      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    6")
+      predAndLbls = predAndLbls ::: List((rel , testWithIndex.filter(f => f._1 == i).first()._2.label))
     }
     predAndLbls
   }
@@ -638,7 +644,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     //System.exit(0)
     
     this.annModel =
-      new com.github.karlhigley.spark.neighbors.ANN(dimensions = 1000, measure = "jaccard")
+      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
         .setTables(4)
         .setSignatureLength(128)
         .setPrimeModulus(739)
