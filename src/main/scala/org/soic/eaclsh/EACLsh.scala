@@ -160,51 +160,60 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
 	//System.exit(0)
     math.sqrt(distance)
   }
-
+  def getPredAndLabelsLshRetarded(): RDD[(Double,Double)] = {
+    val tmp = annModel.neighbors(testHashedDataset, this.k).map(r => (r._1, r._2.map(f => f._1)))
+    //tmp.foreach(f => println(f._1 + " " + f._2.toString()))
+    val gharch = tmp.flatMap(f => f._2.map { x => (x, f._1) })
+    
+    val zerp = gharch.join(dataWithIndex).map(f => (f._2._1, f._2._2.label)).groupByKey().map(f => (f._1, f._2.groupBy(identity).maxBy(_._2.size)._1))
+    .join(testWithIndex).map(f => (f._2._1, f._2._2.label))
+    
+    zerp
+  }
+  
   def getPredAndLabelsLsh(): List[(Double,Double)] = {
-//    val tmp = annModel.neighbors(testHashedDataset, this.k).map(r => (r._1, r._2.map(f => f._1)))
-//    val gharch = tmp.flatMap(f => f._2.map { x => (x, f._1) })
-//    .join(dataWithIndex).map(f => (f._2._1, f._2._2)).join(testWithIndex).map(f => (f._1, (f._2._1.label, f._2._2.features.toArray.zip(f._2._1.features.toArray))))
-//    .groupByKey()
-//    
-//    var predAndLbls = List[(Double, Double)]()
-//    for (i <- 0 until testData.count().toInt){
-//      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    1")
-//      val tmpLabel = gharch.filter(f => f._1 == i).first()._1
-//      val rulesToConsider = ruleBase4RddIndex.filter(f => f._2._1._1 == tmpLabel)
-//      val hashedRuleset = rulesToConsider.map(r => {
-//        (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
-//      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    2")
-//      //println("--------------------------" + hashedRuleset.count())
-//      //hashedRuleset.foreach(f => println(f.toString()))
-//        
-//      val tmpAnnRuleModel =
-//        new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
-//          .setTables(4)
-//          .setSignatureLength(128)
-//          .setPrimeModulus(739)
-//          .setBands(16)
-//          .train(hashedRuleset)
-//      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    3")
-//      val hashedRulesToRetrieve = rulesToConsider.map(r => {
-//        (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
-//      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    4") 
-//      val retrievedRules = tmpAnnRuleModel.neighbors(hashedRulesToRetrieve, rno)
-//      retrievedRules.cache()
-//      rulesToConsider.cache()
-//      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    5 retrules " + retrievedRules.count() + " rtocons " + rulesToConsider.count() )
-//      val zer = retrievedRules.map(r => (r._1, r._2.map(f => f._1))).flatMap(f => f._2.map { x => (x, f._1) })
-//      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    zer")
-//      val gher = zer
-//      .join(rulesToConsider).map(f => (f._2._1, f._2._2._1._2)).groupByKey()
-//      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    gher")
-//      val rel = gher
-//      .map(f => f._2.toList.groupBy(identity).maxBy(_._2.size)._1).collect().toList.groupBy(identity).maxBy(_._2.size)._1
-//      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    6")
-//      predAndLbls = predAndLbls ::: List((rel , testWithIndex.filter(f => f._1 == i).first()._2.label))
-//    }
-//    predAndLbls
-      List((1.0,1.0))
+    val tmp = annModel.neighbors(testHashedDataset, this.k).map(r => (r._1, r._2.map(f => f._1)))
+    val gharch = tmp.flatMap(f => f._2.map { x => (x, f._1) })
+    .join(dataWithIndex).map(f => (f._2._1, f._2._2)).join(testWithIndex).map(f => (f._1, (f._2._1.label, f._2._2.features.toArray.zip(f._2._1.features.toArray))))
+    .groupByKey()
+    
+    var predAndLbls = List[(Double, Double)]()
+    for (i <- 0 until testData.count().toInt){
+      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    1")
+      val tmpLabel = gharch.filter(f => f._1 == i).first()._1
+      val rulesToConsider = ruleBase4RddIndex.filter(f => f._2._1._1 == tmpLabel)
+      val hashedRuleset = rulesToConsider.map(r => {
+        (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
+      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    2")
+      //println("--------------------------" + hashedRuleset.count())
+      //hashedRuleset.foreach(f => println(f.toString()))
+        
+      val tmpAnnRuleModel =
+        new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
+          .setTables(4)
+          .setSignatureLength(128)
+          .setPrimeModulus(739)
+          .setBands(16)
+          .train(hashedRuleset)
+      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    3")
+      val hashedRulesToRetrieve = rulesToConsider.map(r => {
+        (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
+      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    4") 
+      val retrievedRules = tmpAnnRuleModel.neighbors(hashedRulesToRetrieve, rno)
+      retrievedRules.cache()
+      rulesToConsider.cache()
+      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    5 retrules " + retrievedRules.count() + " rtocons " + rulesToConsider.count() )
+      val zer = retrievedRules.map(r => (r._1, r._2.map(f => f._1))).flatMap(f => f._2.map { x => (x, f._1) })
+      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    zer")
+      val gher = zer
+      .join(rulesToConsider).map(f => (f._2._1, f._2._2._1._2)).groupByKey()
+      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    gher")
+      val rel = gher
+      .map(f => f._2.toList.groupBy(identity).maxBy(_._2.size)._1).collect().toList.groupBy(identity).maxBy(_._2.size)._1
+      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    6")
+      predAndLbls = predAndLbls ::: List((rel , testWithIndex.filter(f => f._1 == i).first()._2.label))
+    }
+    predAndLbls
   }
   
   def getPredAndLabelsKNNLsh(): RDD[(Double,Double)] = {

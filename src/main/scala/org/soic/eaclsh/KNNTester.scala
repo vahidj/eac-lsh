@@ -245,13 +245,14 @@ object KNNTester {
       //val labelAndPreds = knn.getPredAndLabels()
 //      val predsAndLabelsKnn = knn.getPredAndLabelsKNN()
       
-      val predsAndLabelsLsh = knn.getPredAndLabelsLsh()
-      println(predsAndLabelsLsh.filter(r => r._1 != r._2).size)
+      val predsAndLabelsLsh = knn.getPredAndLabelsLshRetarded()
+      //println(predsAndLabelsLsh.filter(r => r._1 != r._2).size)
 //      val predsAndLabelsKnnLsh = knn.getPredAndLabelsKNNLsh()
 //      println("still alive 1")
-//      val err = predsAndLabelsKnnLsh.filter(f => f._1 != f._2).count()
-//      println("still alive 2")
-//      println("here is the error " + err)
+      //val err = predsAndLabelsKnnLsh.filter(f => f._1 != f._2).count()
+      val err = predsAndLabelsLsh.filter(f => f._1 != f._2).count()
+      println("still alive 2")
+      println("here is the error " + err)
       
       
       
