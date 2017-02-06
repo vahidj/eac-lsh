@@ -873,8 +873,9 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     }
 
     this.hashedRuleSetGlobal = ruleBase4RddIndex.map(r => {
-      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } ).filter(f => f._1 < 100)
+      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } ).filter(f => f._1 < 100L)
     
+    this.hashedRuleSetGlobal.foreach(f => println(f._2.toString()))
 
     annRuleModel =
       new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
