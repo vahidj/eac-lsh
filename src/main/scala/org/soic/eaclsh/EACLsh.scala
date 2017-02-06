@@ -185,11 +185,13 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     val formedRules = gharchNotestInd.map(r => {
       (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )    
 
-    val tmp2 = tmpAnnRuleModel.neighbors(formedRules, this.rno).map(r => (r._1, r._2.map(f => f._1)))
+    val tmp2 = tmpAnnRuleModel.neighbors(formedRules, this.rno).map(r =>{println("111111111111111111111111111111111111111111") 
+      (r._1, r._2.map(f => f._1))})
     val zaghart = tmp2.flatMap(f => f._2.map { x => (x, f._1) })
     .join(ruleBase4RddIndex).map(f => (f._2._1, f._2._2)).join(gharch)
     .map(f => (f._2._2._1, (f._2._1._1, f._2._2._2._1)))
     .map(f => {
+      println("ahahahahahahhahahahahhahahahahahahahah")
       val testInd = f._1
       val pred = if (f._2._1._1 == f._2._2._1) f._2._1._1 else f._2._2._1  
       val lab = f._2._2._2
