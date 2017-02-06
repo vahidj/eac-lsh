@@ -161,14 +161,41 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     math.sqrt(distance)
   }
   def getPredAndLabelsLshRetarded(): RDD[(Double,Double)] = {
+    val hashedRuleset = ruleBase4RddIndex.map(r => {
+      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )    
+    val tmpAnnRuleModel =
+      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
+        .setTables(4)
+        .setSignatureLength(128)
+        .setPrimeModulus(739)
+        .setBands(16)
+        .train(hashedRuleset)
+        
     val tmp = annModel.neighbors(testHashedDataset, this.k).map(r => (r._1, r._2.map(f => f._1)))
-    //tmp.foreach(f => println(f._1 + " " + f._2.toString()))
     val gharch = tmp.flatMap(f => f._2.map { x => (x, f._1) })
+    .join(dataWithIndex).map(f => (f._2._1, f._2._2)).join(testWithIndex)
+    .map(f => (f._1,  ((f._2._1.label, f._2._2.label),(f._2._1.features.toArray.toList.zip(f._2._2.features.toArray.toList)))))
+    .zipWithIndex().map{case (k, v) => (v, k)}
     
-    val zerp = gharch.join(dataWithIndex).map(f => (f._2._1, f._2._2.label)).groupByKey().map(f => (f._1, f._2.groupBy(identity).maxBy(_._2.size)._1))
-    .join(testWithIndex).map(f => (f._2._1, f._2._2.label))
-    
-    zerp
+    val gharchNotestInd = gharch
+    .map(f => (f._1, f._2._2))
+//    .groupByKey()
+    val formedRules = gharchNotestInd.map(r => {
+      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )    
+
+    val tmp2 = tmpAnnRuleModel.neighbors(formedRules, this.k).map(r => (r._1, r._2.map(f => f._1)))
+    val zaghart = tmp2.flatMap(f => f._2.map { x => (x, f._1) })
+    .join(ruleBase4RddIndex).map(f => (f._2._1, f._2._2)).join(gharch)
+    .map(f => (f._2._2._1, (f._2._1._1, f._2._2._2._1)))
+    .map(f => {
+      val testInd = f._1
+      val pred = if (f._2._1._1 == f._2._2._1) f._2._1._1 else f._2._2._1  
+      val lab = f._2._2._2
+      (testInd, (pred, lab))
+    })
+    .groupByKey().map(f => (f._2.toList(0)._2, f._2.toList.map(f => f._1).groupBy(identity).maxBy(_._2.size)._1))
+ 
+    zaghart
   }
   
   def getPredAndLabelsLsh(): List[(Double,Double)] = {
