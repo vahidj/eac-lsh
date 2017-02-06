@@ -875,7 +875,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     }
 
     hashedRuleSetGlobal = ruleBase4RddIndex.map(r => {
-      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } ).filter(f => f._1 < 600L)
+      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )//.filter(f => f._1 < 600L)
     
     println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + hashedRuleSetGlobal.count())
     
