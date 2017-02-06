@@ -174,7 +174,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
         
     val tmp = annModel.neighbors(testHashedDataset, this.k).map(r => {println("00000000000000000000000000000000000000000000000") 
       (r._1, r._2.map(f => f._1))})
-    val gharch = tmp.flatMap(f => f._2.map { x => (x, f._1) })
+    val gharch = tmp.flatMap(f => f._2.map {println("ppppppppppppppppppppppppppppp") 
+      x => (x, f._1) })
     .join(dataWithIndex).map(f => (f._2._1, f._2._2)).join(testWithIndex)
     .map(f => (f._1,  ((f._2._1.label, f._2._2.label),(f._2._1.features.toArray.toList.zip(f._2._2.features.toArray.toList)))))
     .zipWithIndex().map{case (k, v) => (v, k)}
@@ -184,7 +185,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
 //    .groupByKey()
     val formedRules = gharchNotestInd.map(r => {
       (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )    
-
+    println("-----------------------" + hashedRuleset.count() + "------------------------" + formedRules.count())
     val tmp2 = tmpAnnRuleModel.neighbors(formedRules, this.rno).map(r =>{println("111111111111111111111111111111111111111111") 
       (r._1, r._2.map(f => f._1))})
     val zaghart = tmp2.flatMap(f => f._2.map { x => (x, f._1) })
