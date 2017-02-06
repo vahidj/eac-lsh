@@ -185,7 +185,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     .map(f => (f._1, f._2._2))
 //    .groupByKey()
     val formedRules = gharchNotestInd.map(r => {
-      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )    
+      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
+    
     println("-----------------------" + hashedRuleSetGlobal.count() + "------------------------" + formedRules.count())
     val tmp2 = annRuleModel.neighbors(formedRules, this.rno).map(r =>{println("111111111111111111111111111111111111111111") 
       (r._1, r._2.map(f => f._1))})
@@ -871,8 +872,9 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
       ruleFeatureCounter += 1
     }
 
-    this.hashedRuleSetGlobal = ruleBase4RddIndex.filter(f => f._1 < 100).map(r => {
-      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
+    this.hashedRuleSetGlobal = ruleBase4RddIndex.map(r => {
+      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } ).filter(f => f._1 < 100)
+    
 
     annRuleModel =
       new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
