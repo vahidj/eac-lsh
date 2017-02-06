@@ -848,6 +848,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
             // distance between two values, I'll always put the smaller value as the first element in the look up as well)
 
             //println(featureClassStat.toString())
+            println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
             ruleMizan(ruleFeatureCounter)((v1, v2)) = vdm
             //ruleMizan(featureCounter)((v2,v1)) = vdm
             //if (v1 <= v2) {
