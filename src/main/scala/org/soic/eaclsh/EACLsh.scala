@@ -162,7 +162,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
   }
   def getPredAndLabelsLshRetarded(): RDD[(Double,Double)] = {
     val hashedRuleset = ruleBase4RddIndex.map(r => {
-      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )    
+      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
+
     val tmpAnnRuleModel =
       new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
         .setTables(4)
@@ -385,7 +386,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
   def getRuleHashBits(point: List[(Double, Double)], hps: List[List[(Double,Double)]]): SparseVector = {
     val pal = new DenseVector(hps.map(r => {
           val dist = getRuleDistance(point, r)
-          //println("---------------------------------------------------------------------" +dist)
+          println("---------------------------------------------------------------------" +dist)
           if (dist < ruleDistThresh)
             0.0
           else
@@ -848,7 +849,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
             // distance between two values, I'll always put the smaller value as the first element in the look up as well)
 
             //println(featureClassStat.toString())
-            println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+            //println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
             ruleMizan(ruleFeatureCounter)((v1, v2)) = vdm
             //ruleMizan(featureCounter)((v2,v1)) = vdm
             //if (v1 <= v2) {
