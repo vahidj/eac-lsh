@@ -172,10 +172,24 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
 //        .setPrimeModulus(739)
 //        .setBands(16)
 //        .train(hashedRuleset)
-        
-    val tmp = annModel.neighbors(testHashedDataset, this.k).map(r => {println("00000000000000000000000000000000000000000000000") 
+    hashedRuleSetGlobal = ruleBase4RddIndex.map(r => {
+      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } ).filter(f => f._1 < 100L)
+    
+    println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + hashedRuleSetGlobal.count())
+    
+    hashedRuleSetGlobal.foreach(f => println("{{{{{{{{{{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}}}}}}}}}}"+f._2.toString()))
+
+    annRuleModel =
+      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
+        .setTables(4)
+        .setSignatureLength(128)
+        .setPrimeModulus(739)
+        .setBands(16)
+        .train(hashedRuleSetGlobal)
+    
+    val tmp = annModel.neighbors(testHashedDataset, this.k).map(r => { 
       (r._1, r._2.map(f => f._1))})
-    val gharch = tmp.flatMap(f => f._2.map {println("ppppppppppppppppppppppppppppp") 
+    val gharch = tmp.flatMap(f => f._2.map { 
       x => (x, f._1) })
     .join(dataWithIndex).map(f => (f._2._1, f._2._2)).join(testWithIndex)
     .map(f => (f._1,  ((f._2._1.label, f._2._2.label),(f._2._1.features.toArray.toList.zip(f._2._2.features.toArray.toList)))))
@@ -872,20 +886,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
       ruleFeatureCounter += 1
     }
 
-    hashedRuleSetGlobal = ruleBase4RddIndex.map(r => {
-      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } ).filter(f => f._1 < 100L)
-    
-    println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + hashedRuleSetGlobal.count())
-    
-    hashedRuleSetGlobal.foreach(f => println("{{{{{{{{{{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}}}}}}}}}}"+f._2.toString()))
 
-    annRuleModel =
-      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
-        .setTables(4)
-        .setSignatureLength(128)
-        .setPrimeModulus(739)
-        .setBands(16)
-        .train(hashedRuleSetGlobal)    
 	//println("*********************((((((((((((((((((((((((()))))))))))))))))))))))))" +ruleMizan.toString)
 	//System.exit(0)
     //ruleMizan(0).count()
