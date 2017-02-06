@@ -48,6 +48,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
   private var hpNo = 100
   private var annModel: ANNModel = null
   private var annRuleModel: ANNModel = null
+  private var hashedRuleSetGlobal:RDD[(Long, SparseVector)] = null
   private var testHashedDataset: RDD[(Long, SparseVector)] = null
   //each element in the list contains the distance between pairs of values of the corrsponding feature
   private var mizan = List.fill(this.data.first().features.size)(scala.collection.mutable.Map[(Double, Double),  Double]())
@@ -161,16 +162,16 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     math.sqrt(distance)
   }
   def getPredAndLabelsLshRetarded(): RDD[(Double,Double)] = {
-    val hashedRuleset = ruleBase4RddIndex.map(r => {
-      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
-
-    val tmpAnnRuleModel =
-      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
-        .setTables(4)
-        .setSignatureLength(128)
-        .setPrimeModulus(739)
-        .setBands(16)
-        .train(hashedRuleset)
+//    val hashedRuleset = ruleBase4RddIndex.filter(f => f._1 < 100).map(r => {
+//      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
+//
+//    val tmpAnnRuleModel =
+//      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
+//        .setTables(4)
+//        .setSignatureLength(128)
+//        .setPrimeModulus(739)
+//        .setBands(16)
+//        .train(hashedRuleset)
         
     val tmp = annModel.neighbors(testHashedDataset, this.k).map(r => {println("00000000000000000000000000000000000000000000000") 
       (r._1, r._2.map(f => f._1))})
@@ -185,8 +186,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
 //    .groupByKey()
     val formedRules = gharchNotestInd.map(r => {
       (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )    
-    println("-----------------------" + hashedRuleset.count() + "------------------------" + formedRules.count())
-    val tmp2 = tmpAnnRuleModel.neighbors(formedRules, this.rno).map(r =>{println("111111111111111111111111111111111111111111") 
+    println("-----------------------" + hashedRuleSetGlobal.count() + "------------------------" + formedRules.count())
+    val tmp2 = annRuleModel.neighbors(formedRules, this.rno).map(r =>{println("111111111111111111111111111111111111111111") 
       (r._1, r._2.map(f => f._1))})
     val zaghart = tmp2.flatMap(f => f._2.map { x => (x, f._1) })
     .join(ruleBase4RddIndex).map(f => (f._2._1, f._2._2)).join(gharch)
@@ -870,6 +871,16 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
       ruleFeatureCounter += 1
     }
 
+    this.hashedRuleSetGlobal = ruleBase4RddIndex.filter(f => f._1 < 100).map(r => {
+      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
+
+    annRuleModel =
+      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
+        .setTables(4)
+        .setSignatureLength(128)
+        .setPrimeModulus(739)
+        .setBands(16)
+        .train(hashedRuleSetGlobal)    
 	//println("*********************((((((((((((((((((((((((()))))))))))))))))))))))))" +ruleMizan.toString)
 	//System.exit(0)
     //ruleMizan(0).count()
