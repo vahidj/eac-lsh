@@ -172,7 +172,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
         .setBands(16)
         .train(hashedRuleset)
         
-    val tmp = annModel.neighbors(testHashedDataset, this.k).map(r => (r._1, r._2.map(f => f._1)))
+    val tmp = annModel.neighbors(testHashedDataset, this.k).map(r => {println("00000000000000000000000000000000000000000000000") 
+      (r._1, r._2.map(f => f._1))})
     val gharch = tmp.flatMap(f => f._2.map { x => (x, f._1) })
     .join(dataWithIndex).map(f => (f._2._1, f._2._2)).join(testWithIndex)
     .map(f => (f._1,  ((f._2._1.label, f._2._2.label),(f._2._1.features.toArray.toList.zip(f._2._2.features.toArray.toList)))))
@@ -184,7 +185,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     val formedRules = gharchNotestInd.map(r => {
       (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )    
 
-    val tmp2 = tmpAnnRuleModel.neighbors(formedRules, this.k).map(r => (r._1, r._2.map(f => f._1)))
+    val tmp2 = tmpAnnRuleModel.neighbors(formedRules, this.rno).map(r => (r._1, r._2.map(f => f._1)))
     val zaghart = tmp2.flatMap(f => f._2.map { x => (x, f._1) })
     .join(ruleBase4RddIndex).map(f => (f._2._1, f._2._2)).join(gharch)
     .map(f => (f._2._2._1, (f._2._1._1, f._2._2._2._1)))
@@ -386,7 +387,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
   def getRuleHashBits(point: List[(Double, Double)], hps: List[List[(Double,Double)]]): SparseVector = {
     val pal = new DenseVector(hps.map(r => {
           val dist = getRuleDistance(point, r)
-          println("---------------------------------------------------------------------" +dist)
+          //println("---------------------------------------------------------------------" +dist)
           if (dist < ruleDistThresh)
             0.0
           else
