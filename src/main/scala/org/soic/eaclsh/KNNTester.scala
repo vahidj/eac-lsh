@@ -55,9 +55,12 @@ object KNNTester {
     var transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-
-    val pw = new PrintWriter(new File("results_car.txt"))
-    for (i <- 0 until 1) {
+    
+    val cts = System.currentTimeMillis.toString()
+    
+    val pw = new PrintWriter(new File("results"+cts+".txt"))
+    pw.write(readr.getClass.toString() + "\n")
+    for (i <- 0 until 100) {
       val splits = transformed.randomSplit(Array(0.7, 0.3))
       val (trainingData, testData) = (splits(0), splits(1))
       /*val schema = StructType([
@@ -245,17 +248,56 @@ object KNNTester {
       //val labelAndPreds = knn.getPredAndLabels()
 //      val predsAndLabelsKnn = knn.getPredAndLabelsKNN()
       
-      val predsAndLabelsLsh = knn.getPredAndLabelsLshRetarded()
+      val predsAndLabelsLsh = knn.getPredAndLabelsLshRetarded() //knn.getPredAndLabelsKNNLsh()//knn.getPredAndLabelsLshRetarded()
       //println(predsAndLabelsLsh.filter(r => r._1 != r._2).size)
 //      val predsAndLabelsKnnLsh = knn.getPredAndLabelsKNNLsh()
 //      println("still alive 1")
       //val err = predsAndLabelsKnnLsh.filter(f => f._1 != f._2).count()
+      var resList:List[Double] = List[Double]()
       val err = predsAndLabelsLsh.filter(f => f._1 != f._2).count()
-      println("still alive 2")
-      println("here is the error " + err)
+      //println("still alive 2")
+      resList = err :: resList  
+      println("{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}" +resList)
+      
+      val metrics = new MulticlassMetrics(predsAndLabelsLsh)
+//      println("Confusion matrix:")
+//      println(metrics.confusionMatrix)
+//      
+//      println("Summary Statistics")
+//
+//      val labels = metrics.labels
+//      labels.foreach { l =>
+//        println(s"Precision($l) = " + metrics.precision(l))
+//      }
+//      
+//      // Recall by label
+//      labels.foreach { l =>
+//        println(s"Recall($l) = " + metrics.recall(l))
+//      }
+//      
+//      // False positive rate by label
+//      labels.foreach { l =>
+//        println(s"FPR($l) = " + metrics.falsePositiveRate(l))
+//      }
+//      
+//      // F-measure by label
+//      labels.foreach { l =>
+//        println(s"F1-Score($l) = " + metrics.fMeasure(l))
+//      }
+      
+      // Weighted stats
+      resList = metrics.weightedPrecision :: resList 
+      resList = metrics.weightedRecall :: resList
+      resList = metrics.weightedFMeasure :: resList
+      resList = metrics.weightedFalsePositiveRate :: resList
+      resList = metrics.weightedTruePositiveRate :: resList
+      pw.write(resList.reverse.mkString("\t") + "\n")
       
       
-      
+//      println(s"Weighted precision: ${metrics.weightedPrecision}")
+//      println(s"Weighted recall: ${metrics.weightedRecall}")
+//      println(s"Weighted F1 score: ${metrics.weightedFMeasure}")
+//      println(s"Weighted false positive rate: ${metrics.weightedFalsePositiveRate}")      
 //      val metrics = new MulticlassMetrics(predsAndLabelsKnnLsh)
 //      println("Confusion matrix:")
 //      println(metrics.confusionMatrix)
@@ -305,6 +347,7 @@ object KNNTester {
 //      pw.write(best_params.toString() + "\n")
 //      pw.write(testErr + " " + testErrRF + " " + testErrKNN + " " + testErrLR + " " + testErrNB /*+ " " + testErrGB*/)
     }
+    pw.close()
 //    pw.close
     //val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
     //println(testErrRF)

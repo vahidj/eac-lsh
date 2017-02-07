@@ -189,7 +189,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     val formedRules = gharchNotestInd.map(r => {
       (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
     
-    println("-----------------------" + hashedRuleSetGlobal.count() + "------------------------" + formedRules.count())
+    println(testWithIndex.count() +  "-----------------------" + hashedRuleSetGlobal.count() + "------------------------" + formedRules.count())
     val tmp2 = annRuleModel.neighbors(formedRules, this.rno).map(r =>{ 
       (r._1, r._2.map(f => f._1))})
     val zaghart = tmp2.flatMap(f => f._2.map { x => (x, f._1) })
@@ -198,7 +198,9 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     .map(f => {
       //println("ahahahahahahhahahahahhahahahahahahahah")
       val testInd = f._1
-      val pred = if (f._2._1._1 == f._2._2._1) f._2._1._1 else f._2._2._1  
+      val pred = if (f._2._1._1 == f._2._2._1) {
+        //println("ey vaaaay 0000000000000111111111111111122222222222222233333333   " + f._1)
+        f._2._1._1} else f._2._2._1  
       val lab = f._2._2._2
       (testInd, (pred, lab))
     })
@@ -883,10 +885,10 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
 
     annRuleModel =
       new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
-        .setTables(4)
-        .setSignatureLength(128)
+        .setTables(1)
+        .setSignatureLength(100)
         .setPrimeModulus(739)
-        .setBands(16)
+        .setBands(2)
         .train(hashedRuleSetGlobal)
 	//println("*********************((((((((((((((((((((((((()))))))))))))))))))))))))" +ruleMizan.toString)
 	//System.exit(0)

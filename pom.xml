@@ -57,6 +57,12 @@
 				<env>tank</env>
 			</properties>
 		</profile>
+		<profile>
+			<id>emr</id>
+			<properties>
+				<env>emr</env>
+			</properties>
+		</profile>		
 	</profiles>
 
 	<build>
