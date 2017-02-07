@@ -60,7 +60,7 @@ object KNNTester {
     
     val pw = new PrintWriter(new File("results"+cts+".txt"))
     pw.write(readr.getClass.toString() + "\n")
-    for (i <- 0 until 100) {
+    for (i <- 0 until 10) {
       val splits = transformed.randomSplit(Array(0.7, 0.3))
       val (trainingData, testData) = (splits(0), splits(1))
       /*val schema = StructType([
