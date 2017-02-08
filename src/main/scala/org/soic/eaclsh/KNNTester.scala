@@ -60,7 +60,7 @@ object KNNTester {
     val cts = System.currentTimeMillis.toString()
     
     val pw = new PrintWriter(new File("results"+cts+".txt"))
-    pw.write(readr.getClass.toString() + " " + method + "\n")
+    pw.write(readr.getClass.toString() + " " + method + " " + System.currentTimeMillis() + "\n")
     
     for (i <- 0 until 10) {
       val splits = transformed.randomSplit(Array(0.7, 0.3))
@@ -219,7 +219,7 @@ object KNNTester {
         resList = metrics.weightedTruePositiveRate :: resList
         pw.write(resList.reverse.mkString("\t") + "\n")
       }
-      else if (method.equals("nb")){
+      else if (method.equals("lr")){
         val lrModel = new LogisticRegressionWithLBFGS().setNumClasses(readr.numberOfClasses).run(trainingData)
         val predsAndLabels = testData.map {
           point => val prediction = lrModel.predict(point.features)
@@ -276,6 +276,7 @@ object KNNTester {
 
 
     }
+    pw.write(System.currentTimeMillis() +"\n")
     pw.close()
   }
 }
