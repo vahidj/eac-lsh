@@ -536,7 +536,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     //getTopNeighbors(testData).map(dataWithIndex.lookup(_)(0).label).groupBy(identity).maxBy(_._2.size)._1
     //EAC
     
-    val baseCaseIndices = if (this.useLsh) annModel.neighbors(testHashedDataset, this.k).first()._2.map(r => r._1.toInt).toList else getTopNeighbors(testData) 
+    val baseCaseIndices = getTopNeighbors(testData)//if (this.useLsh) annModel.neighbors(testHashedDataset, this.k).first()._2.map(r => r._1.toInt).toList else getTopNeighbors(testData) 
     var result = 0.0
     //println(this.ruleBase4WithIndex.toString())
     //System.exit(0)
