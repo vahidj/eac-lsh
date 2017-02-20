@@ -132,7 +132,7 @@ object KNNTester {
       }
       else if (method.equals("eaclsh"))
       {
-	      val best_params = List(10, 10, 10)
+	      val best_params = List(10, 15, 10)
         val knn = new EACLsh(best_params(0), best_params(1), best_params(2),
         trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo, true)  
 	      knn.train(sc)
