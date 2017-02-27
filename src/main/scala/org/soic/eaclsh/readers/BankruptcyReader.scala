@@ -69,6 +69,8 @@ class BankruptcyReader extends Reader{
   override def categoricalFeaturesInfo: Map[Int, Int] = Map[Int, Int]((0,3),(1,3),(2,3),(3,3),(4,3),(5,3))
 
   override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]()
+  
+  override def numericalFeaturesRange: Map[Int, (Double, Double)] = Map[Int, (Double, Double)]()
 
   override def dataSchema: String = "industrial_risk management_risk financial_flexibility credibility competitiveness operating_risk class"
 

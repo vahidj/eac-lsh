@@ -11,6 +11,7 @@ trait Reader {
   def numberOfClasses: Int
   def categoricalFeaturesInfo: Map[Int, Int]
   def numericalFeaturesInfo: Map[Int, Double]
+  def numericalFeaturesRange: Map[Int, (Double, Double)]
   def dataSchema: String
   def inputFileName: String
   }

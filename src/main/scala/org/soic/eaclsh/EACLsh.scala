@@ -27,7 +27,7 @@ import org.apache.spark.broadcast.Broadcast
 
 
 class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: Int, data: RDD[LabeledPoint],
-          testData: RDD[LabeledPoint], categoricalFeaturesInfo: Map[Int, Int], numericalFeaturesInfo: Map[Int, Double], inputUseLsh:Boolean)
+          testData: RDD[LabeledPoint], categoricalFeaturesInfo: Map[Int, Int], numericalFeaturesInfo: Map[Int, Double], numericalFeaturesRange: Map[Int, (Double,Double)], inputUseLsh:Boolean)
   extends Serializable with Logging {
   def setK(k: Int): EACLsh = {
     this.k = k
@@ -40,7 +40,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
   private var dataWithIndex: RDD[(Long, LabeledPoint)] = data.zipWithIndex().map{case (k, v) => (v, k)}
   private var testWithIndex: RDD[(Long, LabeledPoint)] = testData.zipWithIndex().map{case (k, v) => (v, k)}
   private val dataWithIndexList: List[(Long, LabeledPoint)] = dataWithIndex.collect().toList
-  private val distThresh: Double = 1.05
+  private val distThresh: Double = 2.126184155//1.05
   private val ruleDistThresh: Double = 1.3
   private var ruleHyperPlanes:List[List[(Double, Double)]] = null
   //private val uniqs: Array[Array[Double]] = data.map(r => r.features(0)).distinct().collect()
@@ -91,6 +91,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
   }
 
   def getRuleDistance(r1: List[(Double, Double)], r2: List[(Double, Double)]): Double = {
+    //println(r2.toString())
+    
     var distance: Double = 0
     var featureCounter = 0
     r1.foreach(f1 => {
@@ -445,11 +447,15 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
   }
   
   def generateRandomHyperPlanes(): List[List[Double]] = {
-    (1 to hpNo).toList.map { x => 
-      val tmp = uniqs.map(r =>         
-          r.keySet.toList(scala.util.Random.nextInt(r.keySet.size))
-        )
-        tmp
+    (1 to hpNo).toList.map { x =>      
+      val tmp = uniqs.zipWithIndex.map{case (r, ind) =>
+          //println(r.keySet.toString())
+          if (r.keySet.size > 0)
+            r.keySet.toList(scala.util.Random.nextInt(r.keySet.size))
+          else
+            numericalFeaturesRange.get(ind).get._1 + (numericalFeaturesRange.get(ind).get._2 - numericalFeaturesRange.get(ind).get._1) * scala.util.Random.nextDouble() 
+        }
+      tmp
       }
   }
   
@@ -679,7 +685,11 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     //this.mizanb = sc.broadcast(mizan)
     
     uniqs = featureStat
+    //println("{{{{{{{{{{{{{{}}}}}}}}}}}}}}" + uniqs.toString() + "           : " + categoricalFeaturesInfo.keySet.toString())
+    
     val hyperPlanes:List[List[Double]] = generateRandomHyperPlanes()
+    //hyperPlanes.foreach { x => println(x.toString()) }
+    //System.exit(1)
     val hashedDataset = dataWithIndex.map(r => {
       //println("test " + r._1.toString() + " " + r._2.toString())
       //println(getHashBits(r._2, hyperPlanes).toString())
@@ -763,7 +773,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     
     ruleBase4RddIndex.union(ruleBase4RddIndexReverse)
 
-
+    ruleBase4RddIndex.take(100).foreach{f => println(f.toString())}
+    System.exit(1)
 //    ruleBase4 = dataWithIndexList.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k,v) => v.map(p => {
 //      ((k._2.label, dataWithIndexList(p)._2.label), (k._2.features.toArray.toList.zip(dataWithIndexList(p)._2.features.toArray)))
 //    })}.flatMap(q => q)
@@ -876,6 +887,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
       ruleFeatureCounter += 1
     }
 
+    ruleHyperPlanes.foreach(f => println(f.toString()))
+    System.exit(1)
     hashedRuleSetGlobal = ruleBase4RddIndex.map(r => {
       (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )//.filter(f => f._1 < 600L)
     

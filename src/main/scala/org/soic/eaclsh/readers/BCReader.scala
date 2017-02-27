@@ -82,6 +82,8 @@ class BCReader extends Reader{
     (4,10),(5,10),(6,10),(7,10),(8,9))
 
   override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]()
+  
+  override def numericalFeaturesRange: Map[Int, (Double, Double)] = Map[Int, (Double, Double)]()
 
   override def dataSchema: String = "clump_thickness u_cell_size u_cell_shape marginal_adhesion single_epithelial bare_nuclei bland_chromatin normal_nucleoli mitoses class"
 

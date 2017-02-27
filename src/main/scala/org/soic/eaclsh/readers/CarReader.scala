@@ -67,6 +67,8 @@ class CarReader extends Reader {
   override def categoricalFeaturesInfo: Map[Int, Int] = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
 
   override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]()
+  
+  override def numericalFeaturesRange: Map[Int, (Double, Double)] = Map[Int, (Double, Double)]()
 
   override def dataSchema: String = "buying maint doors persons lug_boot safety acceptability"
 

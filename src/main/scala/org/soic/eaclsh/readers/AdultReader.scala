@@ -83,6 +83,8 @@ class AdultReader extends Reader {
   override def categoricalFeaturesInfo: Map[Int, Int] = Map[Int, Int]((1,7),(3,16),(5,7),(6,14),(7,6),(8,5),(9,2),(14,41))
 
   override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]((0,13.13466),(2,105653),(4,2.549995),(10,7406.346),(11,404.2984),(12,11.97998))
+  
+  override def numericalFeaturesRange: Map[Int, (Double, Double)] = Map[Int, (Double, Double)]()
 
   override def dataSchema: String = "age workclass fnlwgt education education-num marital occupation relationship race sex capital-gain capital-loss hours-per-week country income"
 

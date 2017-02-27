@@ -20,6 +20,11 @@ import org.soic.eaclsh.readers.CarReader
 import java.io._
 import org.apache.spark.mllib.evaluation.MulticlassMetrics
 import org.apache.spark.mllib.linalg.VectorUDT
+import org.soic.eaclsh.readers.ActivityReader
+import org.soic.eaclsh.readers.ActivityReader
+import org.soic.eaclsh.readers.BalanceReader
+import org.soic.eaclsh.readers.CreditReader
+import org.soic.eaclsh.readers.ActivityReader
 
 /**
   * Created by vjalali on 2/27/16.
@@ -50,7 +55,7 @@ object KNNTester {
     val schemaStringBC = "clump_thickness u_cell_size u_cell_shape marginal_adhesion single_epithelial bare_nuclei bland_chromatin normal_nucleoli mitoses class"
     val schemaStringBankruptcy = "industrial_risk management_risk financial_flexibility credibility competitiveness operating_risk class"
     val schemaStringCredit = "a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16"
-    val readr = new CarReader // new adultReader
+    val readr = new ActivityReader // new adultReader
     //val readr = new CreditReader
     val indexed = readr.Indexed(EACLshConfig.BASEPATH + "dataset/" + readr.inputFileName /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     var transformed = readr.DFTransformed(indexed)
@@ -65,6 +70,8 @@ object KNNTester {
     for (i <- 0 until 10) {
       val splits = transformed.randomSplit(Array(0.7, 0.3))
       val (trainingData, testData) = (splits(0), splits(1))
+      //trainingData.foreach { x => println(x.toString()) }
+      //System.exit(1)
       /*val schema = StructType([
         StructField("label", DoubleType, true),
       StructField("features", VectorUDT, true)
@@ -132,9 +139,9 @@ object KNNTester {
       }
       else if (method.equals("eaclsh"))
       {
-	      val best_params = List(10, 15, 10)
+	      val best_params = List(10, 10, 10)
         val knn = new EACLsh(best_params(0), best_params(1), best_params(2),
-        trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo, true)  
+        trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo, readr.numericalFeaturesRange, true)  
 	      knn.train(sc)
         val predsAndLabelsLsh = knn.getPredAndLabelsLshRetarded() //knn.getPredAndLabelsKNNLsh()//knn.getPredAndLabelsLshRetarded()
         var resList:List[Double] = List[Double]()
@@ -151,7 +158,7 @@ object KNNTester {
       else if (method.equals("knnlsh")){
 	      val best_params = List(10, 10, 10)
         val knn = new EACLsh(best_params(0), best_params(1), best_params(2),
-        trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo, true)  
+        trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo, readr.numericalFeaturesRange, true)  
 	      knn.train(sc)
         val predsAndLabelsLsh = knn.getPredAndLabelsKNNLsh() //knn.getPredAndLabelsKNNLsh()//knn.getPredAndLabelsLshRetarded()
         var resList:List[Double] = List[Double]()
@@ -168,7 +175,7 @@ object KNNTester {
       else if (method.equals("eac")){
         val best_params = List(10, 10, 10)
         val knn = new EACLsh(best_params(0), best_params(1), best_params(2),
-            trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo, false)
+            trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo, readr.numericalFeaturesRange, false)
         knn.train(sc)
         val predsAndLabels = knn.getPredAndLabels()
         
@@ -186,7 +193,7 @@ object KNNTester {
       else if (method.equals("knn")){
         val best_params = List(10, 10, 10)
         val knn = new EACLsh(best_params(0), best_params(1), best_params(2),
-            trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo, false)
+            trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo, readr.numericalFeaturesRange, false)
         knn.train(sc)
         val predsAndLabels = knn.getPredAndLabelsKNN()
         

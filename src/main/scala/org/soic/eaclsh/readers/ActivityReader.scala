@@ -63,6 +63,8 @@ class ActivityReader extends Reader {
   override def categoricalFeaturesInfo: Map[Int, Int] = Map[Int, Int]((3,9),(4,3),(5,6))
 
   override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]((0,0.4472657),(1,0.449882),(2,0.5141587))
+  
+  override def numericalFeaturesRange: Map[Int, (Double, Double)] = Map[Int, (Double, Double)]((0, (0,1)),(1, (0,1)),(2, (0,1)) )
 
   override def dataSchema: String = "x y z user model device gt"
 
