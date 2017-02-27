@@ -40,7 +40,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
   private var dataWithIndex: RDD[(Long, LabeledPoint)] = data.zipWithIndex().map{case (k, v) => (v, k)}
   private var testWithIndex: RDD[(Long, LabeledPoint)] = testData.zipWithIndex().map{case (k, v) => (v, k)}
   private val dataWithIndexList: List[(Long, LabeledPoint)] = dataWithIndex.collect().toList
-  private val distThresh: Double = 2.126184155//1.05
+  private val distThresh: Double = 1.126184155//1.05
   private val ruleDistThresh: Double = 1.3
   private var ruleHyperPlanes:List[List[(Double, Double)]] = null
   //private val uniqs: Array[Array[Double]] = data.map(r => r.features(0)).distinct().collect()
@@ -749,9 +749,13 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
 //      (t._1, annModel.neighbors(hashedDataset.filter(r => r._1 == t._1), this.ruleRadius + 1)
 //          .first()._2.map(r => r._1).toList.filter { x => x != t._1 }))
           
+    //hashedDataset.foreach(f => println(f.toString()))
+    //System.exit(1)
     val caseNeighbors = annModel.neighbors(hashedDataset, this.ruleRadius + 1)
     .map(f => (f._1, f._2.filter(p => p._1 != f._1).map(r => r._1).toList))
-          
+    caseNeighbors.foreach(f => println(f.toString()))
+    System.exit(1)
+    
 
     val caseNeighborsVector = caseNeighbors.flatMap(f => f._2.map { x => (x, f._1) })
     .join(dataWithIndex).map(f => (f._2._1, f._2._2)).groupByKey().map(f => (f._1, f._2.toList))
@@ -763,10 +767,13 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     //System.exit(0)
     //val tmpCb = dataWithIndex.collect().toList
     
+    //dataWithIndex.foreach(f => println(f.toString()))
+    //caseNeighborsVector.foreach(f => println(f.toString()))
+    System.exit(0)
     ruleBase4RddIndex = dataWithIndex.join(caseNeighborsVector)
     .flatMap(f => f._2._2.map { x => ((f._2._1.label, x.label),(f._2._1.features.toArray.toList.zip(x.features.toArray.toList))) })
     .zipWithIndex().map{case (k, v) => (v, k)}
-    
+    //System.exit(0)
     val ruleBase4RddIndexReverse = dataWithIndex.join(caseNeighborsVector)
     .flatMap(f => f._2._2.map { x => ((x.label, f._2._1.label),(x.features.toArray.toList.zip(f._2._1.features.toArray.toList))) })
     .zipWithIndex().map{case (k, v) => (v, k)}
