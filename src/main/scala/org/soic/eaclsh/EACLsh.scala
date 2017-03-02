@@ -191,7 +191,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     val formedRules = gharchNotestInd.map(r => {
       (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
     
-    println(testWithIndex.count() +  "-----------------------" + hashedRuleSetGlobal.count() + "------------------------" + formedRules.count())
+    //println(testWithIndex.count() +  "-----------------------" + hashedRuleSetGlobal.count() + "------------------------" + formedRules.count())
     val tmp2 = annRuleModel.neighbors(formedRules, this.rno).map(r =>{ 
       (r._1, r._2.map(f => f._1))})
     val zaghart = tmp2.flatMap(f => f._2.map { x => (x, f._1) })
@@ -219,12 +219,12 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     
     var predAndLbls = List[(Double, Double)]()
     for (i <- 0 until testData.count().toInt){
-      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    1")
+      //println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    1")
       val tmpLabel = gharch.filter(f => f._1 == i).first()._1
       val rulesToConsider = ruleBase4RddIndex.filter(f => f._2._1._1 == tmpLabel)
       val hashedRuleset = rulesToConsider.map(r => {
         (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
-      println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    2")
+      //println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    2")
       //println("--------------------------" + hashedRuleset.count())
       //hashedRuleset.foreach(f => println(f.toString()))
         
@@ -704,9 +704,9 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     this.annModel =
       new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
         .setTables(4)
-        .setSignatureLength(128)
+        .setSignatureLength(100)
         .setPrimeModulus(739)
-        .setBands(16)
+        .setBands(10)
         .train(hashedDataset)
 
 //    val zer = annModel.neighbors(hashedDataset.filter(r => r._1 == 0), 100)
@@ -737,7 +737,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     //System.exit(0)
     
 
-        
+   
     println("Started forming rules")
 //    println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" + annModel.neighbors(hashedDataset.filter(r => r._1 == 0), this.ruleRadius + 1).first()._2.map(r => r._1.toInt).toList.toString())
 //    System.exit(0)
@@ -753,8 +753,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     //System.exit(1)
     val caseNeighbors = annModel.neighbors(hashedDataset, this.ruleRadius + 1)
     .map(f => (f._1, f._2.filter(p => p._1 != f._1).map(r => r._1).toList))
-    caseNeighbors.foreach(f => println(f.toString()))
-    System.exit(1)
+    //caseNeighbors.foreach(f => println(f.toString()))
+    //System.exit(1)
     
 
     val caseNeighborsVector = caseNeighbors.flatMap(f => f._2.map { x => (x, f._1) })
@@ -769,7 +769,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     
     //dataWithIndex.foreach(f => println(f.toString()))
     //caseNeighborsVector.foreach(f => println(f.toString()))
-    System.exit(0)
+    //System.exit(0)
     ruleBase4RddIndex = dataWithIndex.join(caseNeighborsVector)
     .flatMap(f => f._2._2.map { x => ((f._2._1.label, x.label),(f._2._1.features.toArray.toList.zip(x.features.toArray.toList))) })
     .zipWithIndex().map{case (k, v) => (v, k)}
@@ -780,8 +780,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     
     ruleBase4RddIndex.union(ruleBase4RddIndexReverse)
 
-    ruleBase4RddIndex.take(100).foreach{f => println(f.toString())}
-    System.exit(1)
+    //ruleBase4RddIndex.take(100).foreach{f => println(f.toString())}
+    //System.exit(1)
 //    ruleBase4 = dataWithIndexList.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k,v) => v.map(p => {
 //      ((k._2.label, dataWithIndexList(p)._2.label), (k._2.features.toArray.toList.zip(dataWithIndexList(p)._2.features.toArray)))
 //    })}.flatMap(q => q)
@@ -894,12 +894,12 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
       ruleFeatureCounter += 1
     }
 
-    ruleHyperPlanes.foreach(f => println(f.toString()))
-    System.exit(1)
+    //ruleHyperPlanes.foreach(f => println(f.toString()))
+    //System.exit(1)
     hashedRuleSetGlobal = ruleBase4RddIndex.map(r => {
       (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )//.filter(f => f._1 < 600L)
     
-    println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + hashedRuleSetGlobal.count())
+    //println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + hashedRuleSetGlobal.count())
     
     //hashedRuleSetGlobal.foreach(f => println("{{{{{{{{{{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}}}}}}}}}}"+f._2.toString()))
 
@@ -908,7 +908,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
         .setTables(1)
         .setSignatureLength(100)
         .setPrimeModulus(739)
-        .setBands(2)
+        .setBands(10)
         .train(hashedRuleSetGlobal)
 	//println("*********************((((((((((((((((((((((((()))))))))))))))))))))))))" +ruleMizan.toString)
 	//System.exit(0)
