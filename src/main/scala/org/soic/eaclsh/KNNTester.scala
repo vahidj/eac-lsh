@@ -67,7 +67,7 @@ object KNNTester {
     val pw = new PrintWriter(new File("results"+cts+".txt"))
     pw.write(readr.getClass.toString() + " " + method + " " + System.currentTimeMillis() + "\n")
     
-    for (i <- 0 until 10) {
+    for (i <- 0 until 1) {
       val splits = transformed.randomSplit(Array(0.7, 0.3))
       val (trainingData, testData) = (splits(0), splits(1))
       //trainingData.foreach { x => println(x.toString()) }
