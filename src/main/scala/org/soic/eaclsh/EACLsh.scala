@@ -231,9 +231,9 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
       val tmpAnnRuleModel =
         new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
           .setTables(4)
-          .setSignatureLength(128)
+          .setSignatureLength(100)
           .setPrimeModulus(739)
-          .setBands(16)
+          .setBands(10)
           .train(hashedRuleset)
       println("+++++++++++++++++++++++++++++++++++++++++++++++++++" + i + "    3")
       val hashedRulesToRetrieve = rulesToConsider.map(r => {
@@ -896,20 +896,20 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
 
     //ruleHyperPlanes.foreach(f => println(f.toString()))
     //System.exit(1)
-    hashedRuleSetGlobal = ruleBase4RddIndex.map(r => {
-      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )//.filter(f => f._1 < 600L)
+//    hashedRuleSetGlobal = ruleBase4RddIndex.map(r => {
+//      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )//.filter(f => f._1 < 600L)
     
     //println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + hashedRuleSetGlobal.count())
     
     //hashedRuleSetGlobal.foreach(f => println("{{{{{{{{{{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}}}}}}}}}}"+f._2.toString()))
 
-    annRuleModel =
-      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
-        .setTables(1)
-        .setSignatureLength(100)
-        .setPrimeModulus(739)
-        .setBands(10)
-        .train(hashedRuleSetGlobal)
+//    annRuleModel =
+//      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
+//        .setTables(1)
+//        .setSignatureLength(100)
+//        .setPrimeModulus(739)
+//        .setBands(10)
+//        .train(hashedRuleSetGlobal)
 	//println("*********************((((((((((((((((((((((((()))))))))))))))))))))))))" +ruleMizan.toString)
 	//System.exit(0)
     //ruleMizan(0).count()
