@@ -170,9 +170,95 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     math.sqrt(distance)
   }
   def getPredAndLabelsLshRetarded(): RDD[(Double,Double)] = {
-//    val hashedRuleset = ruleBase4RddIndex.filter(f => f._1 < 100).map(r => {
-//      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
-//
+    println("Started forming rules")
+
+    val caseNeighbors = annModel.neighbors(hashedDataset2, this.ruleRadius + 1)
+    .map(f => (f._1, f._2.filter(p => p._1 != f._1).map(r => r._1).toList))
+
+    
+
+    val caseNeighborsVector = caseNeighbors.flatMap(f => f._2.map { x => (x, f._1) })
+    .join(dataWithIndex).map(f => (f._2._1, f._2._2)).groupByKey().map(f => (f._1, f._2.toList))
+    
+
+    ruleBase4RddIndex = dataWithIndex.join(caseNeighborsVector)
+    .flatMap(f => f._2._2.map { x => ((f._2._1.label, x.label),(f._2._1.features.toArray.toList.zip(x.features.toArray.toList))) })
+    .zipWithIndex().map{case (k, v) => (v, k)}
+
+    val ruleBase4RddIndexReverse = dataWithIndex.join(caseNeighborsVector)
+    .flatMap(f => f._2._2.map { x => ((x.label, f._2._1.label),(x.features.toArray.toList.zip(f._2._1.features.toArray.toList))) })
+    .zipWithIndex().map{case (k, v) => (v, k)}
+    
+    ruleBase4RddIndex.union(ruleBase4RddIndexReverse)
+
+    val ruleClassStat = ruleBase4RddIndex.map(x => x._2._1).groupBy(identity).mapValues(_.size).collect().toMap
+    
+
+    var ruleFeatureStat = List[Map[(Double, Double), Int]]()
+    var ruleFeatureClassStat = List[Map[((Double, Double), (Double, Double)), Int]]()
+    for (i <- 0 until data.first().features.size){
+      if (categoricalFeaturesInfo.keySet.contains(i)) {
+        val tmp = ruleBase4RddIndex.map(x => x._2._2(i)).groupBy(identity).mapValues(_.size).collect().toMap
+        ruleFeatureStat = ruleFeatureStat ::: List(tmp)
+        val tmp2 = ruleBase4RddIndex.map(x => (x._2._2(i), x._2._1)).groupBy(identity).mapValues(_.size).collect().toMap
+        ruleFeatureClassStat = ruleFeatureClassStat ::: List(tmp2)
+      }
+      else{
+        ruleFeatureStat = ruleFeatureStat ::: List()
+        ruleFeatureClassStat = ruleFeatureClassStat ::: List()
+      }
+    }
+
+    ruleUniqs = ruleFeatureStat
+    this.ruleHyperPlanes = generateRandomRuleHyperPlanes()
+        
+        
+
+    val ruleFeatureIt = ruleFeatureStat.iterator
+    var ruleFeatureCounter = 0
+    //the following while loop generates VDM between all possible pairs of values for all features in the domain
+    while(ruleFeatureIt.hasNext){
+      val ruleFeatureValues = ruleFeatureIt.next.keySet.toArray
+      if (categoricalFeaturesInfo.keySet.contains(ruleFeatureCounter)) {
+        for (i <- 0 until ruleFeatureValues.length) {
+          for (j <- i + 1 until ruleFeatureValues.length) {
+            val v1 = ruleFeatureValues(i)
+            val v2 = ruleFeatureValues(j)
+            val v1cnt = ruleFeatureStat(ruleFeatureCounter)(v1).toInt.toDouble
+            val v2cnt = ruleFeatureStat(ruleFeatureCounter)(v2).toInt.toDouble
+            var vdm = 0.0
+            val ruleClassValsIt = ruleClassStat.keySet.iterator
+            while (ruleClassValsIt.hasNext) {
+              val ruleClassVal = ruleClassValsIt.next()
+              val tmp1 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v1, ruleClassVal)), 0).toDouble
+              val tmp2 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v2, ruleClassVal)), 0).toDouble
+              vdm += Math.abs(tmp1 / v1cnt - tmp2 / v2cnt)
+              //println(tmp1 + " " + tmp2 + " " + " " + tmp1 + " " +tmp2 +" "+ vdm)
+            }
+            //I'll put the smaller element as the first element of the tuple.
+            //this makes looking up a tuple in mizan easier in future (meaning that if I want to check the
+            // distance between two values, I'll always put the smaller value as the first element in the look up as well)
+
+            //println(featureClassStat.toString())
+            //println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+            ruleMizan(ruleFeatureCounter)((v1, v2)) = vdm
+          }
+        }
+      }
+      ruleFeatureCounter += 1
+    }
+    
+    
+    
+    val hashedRuleset = ruleBase4RddIndex.map(r => {
+      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
+
+    val tmpAnnRuleModel =
+      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "hamming")
+        .setTables(1)
+        .setSignatureLength(8)
+        .train(hashedRuleset)
+        
 //    val tmpAnnRuleModel =
 //      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
 //        .setTables(4)
@@ -181,41 +267,40 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
 //        .setBands(16)
 //        .train(hashedRuleset)
     
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
-//    val tmp = annModel.neighbors(testHashedDataset, this.k).map(r => { 
-//      (r._1, r._2.map(f => f._1))})
-//    val gharch = tmp.flatMap(f => f._2.map { 
-//      x => (x, f._1) })
-//    .join(dataWithIndex).map(f => (f._2._1, f._2._2)).join(testWithIndex)
-//    .map(f => (f._1,  ((f._2._1.label, f._2._2.label),(f._2._1.features.toArray.toList.zip(f._2._2.features.toArray.toList)))))
-//    .zipWithIndex().map{case (k, v) => (v, k)}
-//    
-//    val gharchNotestInd = gharch
-//    .map(f => (f._1, f._2._2))
+    val tmp = annModel.neighbors(testHashedDataset2, this.k).map(r => { 
+      (r._1, r._2.map(f => f._1))})
+    val gharch = tmp.flatMap(f => f._2.map { 
+      x => (x, f._1) })
+    .join(dataWithIndex).map(f => (f._2._1, f._2._2)).join(testWithIndex)
+    .map(f => (f._1,  ((f._2._1.label, f._2._2.label),(f._2._1.features.toArray.toList.zip(f._2._2.features.toArray.toList)))))
+    .zipWithIndex().map{case (k, v) => (v, k)}
+    
+    val gharchNotestInd = gharch
+    .map(f => (f._1, f._2._2))
 ////    .groupByKey()
-//    val formedRules = gharchNotestInd.map(r => {
-//      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
-//    
-//    //println(testWithIndex.count() +  "-----------------------" + hashedRuleSetGlobal.count() + "------------------------" + formedRules.count())
-//    val tmp2 = annRuleModel.neighbors(formedRules, this.rno).map(r =>{ 
-//      (r._1, r._2.map(f => f._1))})
-//    val zaghart = tmp2.flatMap(f => f._2.map { x => (x, f._1) })
-//    .join(ruleBase4RddIndex).map(f => (f._2._1, f._2._2)).join(gharch)
-//    .map(f => (f._2._2._1, (f._2._1._1, f._2._2._2._1)))
-//    .map(f => {
-//      //println("ahahahahahahhahahahahhahahahahahahahah")
-//      val testInd = f._1
-//      val pred = if (f._2._1._1 == f._2._2._1) {
-//        //println("ey vaaaay 0000000000000111111111111111122222222222222233333333   " + f._1)
-//        f._2._1._1} else f._2._2._1  
-//      val lab = f._2._2._2
-//      (testInd, (pred, lab))
-//    })
-//    .groupByKey().map(f => (f._2.toList(0)._2, f._2.toList.map(f => f._1).groupBy(identity).maxBy(_._2.size)._1))
-// 
-//    zaghart
-    null
+    val formedRules = gharchNotestInd.map(r => {
+      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
+    
+    //println(testWithIndex.count() +  "-----------------------" + hashedRuleSetGlobal.count() + "------------------------" + formedRules.count())
+    val tmp2 = annRuleModel.neighbors(formedRules, this.rno).map(r =>{ 
+      (r._1, r._2.map(f => f._1))})
+    val zaghart = tmp2.flatMap(f => f._2.map { x => (x, f._1) })
+    .join(ruleBase4RddIndex).map(f => (f._2._1, f._2._2)).join(gharch)
+    .map(f => (f._2._2._1, (f._2._1._1, f._2._2._2._1)))
+    .map(f => {
+      //println("ahahahahahahhahahahahhahahahahahahahah")
+      val testInd = f._1
+      val pred = if (f._2._1._1 == f._2._2._1) {
+        //println("ey vaaaay 0000000000000111111111111111122222222222222233333333   " + f._1)
+        f._2._1._1} else f._2._2._1  
+      val lab = f._2._2._2
+      (testInd, (pred, lab))
+    })
+    .groupByKey().map(f => (f._2.toList(0)._2, f._2.toList.map(f => f._1).groupBy(identity).maxBy(_._2.size)._1))
+ 
+    zaghart
   }
   
   def getPredAndLabelsLsh(): List[(Double,Double)] = {
@@ -715,184 +800,30 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     
 
    
-//    println("Started forming rules")
-////    println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" + annModel.neighbors(hashedDataset.filter(r => r._1 == 0), this.ruleRadius + 1).first()._2.map(r => r._1.toInt).toList.toString())
-////    System.exit(0)
-//    //val caseNeighbors: scala.collection.mutable.Map[Int, List[Int]] = scala.collection.mutable.Map[Int, List[Int]]()
-//    
-//    //val caseNeighbors = dataWithIndex.map(t => (t._1.toInt, annModel.neighbors(hashedDataset.filter(r => r._1 == t._1), this.ruleRadius + 1).first()._2.map(r => r._1.toInt).toList.filter { x => x != t._1 }))
-//    
-////    val caseNeighbors = dataWithIndex.map(t => 
-////      (t._1, annModel.neighbors(hashedDataset.filter(r => r._1 == t._1), this.ruleRadius + 1)
-////          .first()._2.map(r => r._1).toList.filter { x => x != t._1 }))
-//          
-//    //hashedDataset.foreach(f => println(f.toString()))
-//    //System.exit(1)
-//    val caseNeighbors = annModel.neighbors(hashedDataset, this.ruleRadius + 1)
-//    .map(f => (f._1, f._2.filter(p => p._1 != f._1).map(r => r._1).toList))
-//    //caseNeighbors.foreach(f => println(f.toString()))
-//    //System.exit(1)
-//    
-//
-//    val caseNeighborsVector = caseNeighbors.flatMap(f => f._2.map { x => (x, f._1) })
-//    .join(dataWithIndex).map(f => (f._2._1, f._2._2)).groupByKey().map(f => (f._1, f._2.toList))
-//    
-//    //System.exit(0)
-//    //println(caseNeighbors.toString())
-////    generateRandomHyperPlanes()
-////    null
-//    //System.exit(0)
-//    //val tmpCb = dataWithIndex.collect().toList
-//    
-//    //dataWithIndex.foreach(f => println(f.toString()))
-//    //caseNeighborsVector.foreach(f => println(f.toString()))
-//    //System.exit(0)
-//    ruleBase4RddIndex = dataWithIndex.join(caseNeighborsVector)
-//    .flatMap(f => f._2._2.map { x => ((f._2._1.label, x.label),(f._2._1.features.toArray.toList.zip(x.features.toArray.toList))) })
-//    .zipWithIndex().map{case (k, v) => (v, k)}
-//    //System.exit(0)
-//    val ruleBase4RddIndexReverse = dataWithIndex.join(caseNeighborsVector)
-//    .flatMap(f => f._2._2.map { x => ((x.label, f._2._1.label),(x.features.toArray.toList.zip(f._2._1.features.toArray.toList))) })
-//    .zipWithIndex().map{case (k, v) => (v, k)}
-//    
-//    ruleBase4RddIndex.union(ruleBase4RddIndexReverse)
-//
-//    //ruleBase4RddIndex.take(100).foreach{f => println(f.toString())}
-//    //System.exit(1)
-////    ruleBase4 = dataWithIndexList.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k,v) => v.map(p => {
-////      ((k._2.label, dataWithIndexList(p)._2.label), (k._2.features.toArray.toList.zip(dataWithIndexList(p)._2.features.toArray)))
-////    })}.flatMap(q => q)
-////
-////    /*ruleBase4 = dataWithIndex.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k, v) =>  v.map(p => {
-////      val tmpCase = dataWithIndexList(p)._2
-////      ((k._2.label, tmpCase.label), (k._2.features.toArray.toList.zip(tmpCase.features.toArray)))
-////    })}.flatMap(q => q)*/
-////
-////    val tmpRuleBase = dataWithIndexList.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k, v) =>  v.map(p => {
-////      val tmpCase = dataWithIndexList(p)._2
-////      ((tmpCase.label, k._2.label), (tmpCase.features.toArray.toList.zip(k._2.features.toArray)))
-////    })}.flatMap(q => q)
-////
-////    ruleBase4.union(tmpRuleBase)
-////    ruleBase4WithIndex = ruleBase4.zipWithIndex.map{case (k,v) => (v,k)}
-//    //ruleBase4WithIndex = ruleBase4.zipWithIndex(). .map{case (k, v) => (v, k)}
-//
-//      //cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
-//      //.map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
-//    //var ruleBase = dataWithIndex.cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
-//    //  .map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
-////    val ruleClassStat = ruleBase4.map(x => x._1).groupBy(identity).mapValues(_.size)
-//    val ruleClassStat = ruleBase4RddIndex.map(x => x._2._1).groupBy(identity).mapValues(_.size).collect().toMap
-//    
-//
-//    var ruleFeatureStat = List[Map[(Double, Double), Int]]()
-//    var ruleFeatureClassStat = List[Map[((Double, Double), (Double, Double)), Int]]()
-//    for (i <- 0 until data.first().features.size){
-//      if (categoricalFeaturesInfo.keySet.contains(i)) {
-////        val tmp = ruleBase4.map(x => x._2(i)).groupBy(identity).mapValues(_.size)
-//        val tmp = ruleBase4RddIndex.map(x => x._2._2(i)).groupBy(identity).mapValues(_.size).collect().toMap
-//        ruleFeatureStat = ruleFeatureStat ::: List(tmp)
-////        val tmp2 = ruleBase4.map(x => (x._2(i), x._1)).groupBy(identity).mapValues(_.size)
-//        val tmp2 = ruleBase4RddIndex.map(x => (x._2._2(i), x._2._1)).groupBy(identity).mapValues(_.size).collect().toMap
-//        ruleFeatureClassStat = ruleFeatureClassStat ::: List(tmp2)
-//      }
-//      else{
-//        ruleFeatureStat = ruleFeatureStat ::: List()
-//        ruleFeatureClassStat = ruleFeatureClassStat ::: List()
-//      }
-//    }
-//
-//    ruleUniqs = ruleFeatureStat
-//    this.ruleHyperPlanes = generateRandomRuleHyperPlanes()
-////    val hashedRuleset = ruleBase4RddIndex.map(r => {
-////      //println("test " + r._1.toString() + " " + r._2.toString())
-////      //println(getHashBits(r._2, hyperPlanes).toString())
-////      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
-////      
-////    
-////    //this.testHashedDataset = testWithIndex.map(r => (r._1, getHashBits(r._2, hyperPlanes)) )
-////    //hashedDataset.foreach(f => println(f._1 + " " + f._2.toString()))
-////    //hashedRuleset.foreach(r => println(r._2.toString()))
-////    //println("()((((((((((((((((((((()))))))))))))))))))))" + hashedRuleset.count() + "---" + hashedRuleset.filter(r => r._2.indices.length == 0).count())
-////    
-////    //System.exit(0)
-////    
-////    this.annRuleModel =
-////      new com.github.karlhigley.spark.neighbors.ANN(dimensions = 1000, measure = "jaccard")
-////        .setTables(4)
-////        .setSignatureLength(128)
-////        .setPrimeModulus(739)
-////        .setBands(16)
-////        .train(hashedRuleset)
-//        
-//        
-//
-//    val ruleFeatureIt = ruleFeatureStat.iterator
-//    var ruleFeatureCounter = 0
-//    //the following while loop generates VDM between all possible pairs of values for all features in the domain
-//    while(ruleFeatureIt.hasNext){
-//      //println("feature iterator")
-//      val ruleFeatureValues = ruleFeatureIt.next.keySet.toArray
-//      if (categoricalFeaturesInfo.keySet.contains(ruleFeatureCounter)) {
-//        for (i <- 0 until ruleFeatureValues.length) {
-//          for (j <- i + 1 until ruleFeatureValues.length) {
-//            val v1 = ruleFeatureValues(i)
-//            val v2 = ruleFeatureValues(j)
-//            val v1cnt = ruleFeatureStat(ruleFeatureCounter)(v1).toInt.toDouble
-//            val v2cnt = ruleFeatureStat(ruleFeatureCounter)(v2).toInt.toDouble
-//            var vdm = 0.0
-//            val ruleClassValsIt = ruleClassStat.keySet.iterator
-//            while (ruleClassValsIt.hasNext) {
-//              val ruleClassVal = ruleClassValsIt.next()
-//              val tmp1 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v1, ruleClassVal)), 0).toDouble
-//              val tmp2 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v2, ruleClassVal)), 0).toDouble
-//              vdm += Math.abs(tmp1 / v1cnt - tmp2 / v2cnt)
-//              //println(tmp1 + " " + tmp2 + " " + " " + tmp1 + " " +tmp2 +" "+ vdm)
-//            }
-//            //I'll put the smaller element as the first element of the tuple.
-//            //this makes looking up a tuple in mizan easier in future (meaning that if I want to check the
-//            // distance between two values, I'll always put the smaller value as the first element in the look up as well)
-//
-//            //println(featureClassStat.toString())
-//            //println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-//            ruleMizan(ruleFeatureCounter)((v1, v2)) = vdm
-//            //ruleMizan(featureCounter)((v2,v1)) = vdm
-//            //if (v1 <= v2) {
-//            //  ruleMizan(featureCounter)((v1, v2)) = vdm
-//            //println(vdm)
-//            //}
-//            //else {
-//            //  ruleMizan(featureCounter)((v2, v1)) = vdm
-//            //println(vdm)
-//            //}
-//          }
-//        }
-//      }
-//      ruleFeatureCounter += 1
-//    }
-//
-//    //ruleHyperPlanes.foreach(f => println(f.toString()))
-//    //System.exit(1)
-////    hashedRuleSetGlobal = ruleBase4RddIndex.map(r => {
-////      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )//.filter(f => f._1 < 600L)
-//    
-//    //println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + hashedRuleSetGlobal.count())
-//    
-//    //hashedRuleSetGlobal.foreach(f => println("{{{{{{{{{{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}}}}}}}}}}"+f._2.toString()))
-//
-////    annRuleModel =
-////      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
-////        .setTables(1)
-////        .setSignatureLength(100)
-////        .setPrimeModulus(739)
-////        .setBands(10)
-////        .train(hashedRuleSetGlobal)
-//	//println("*********************((((((((((((((((((((((((()))))))))))))))))))))))))" +ruleMizan.toString)
-//	//System.exit(0)
-//    //ruleMizan(0).count()
-//    //println(ruleMizan.toString())
-//    //System.exit(0)
-//    //println("Started building rule mizan")
+
+
+    //ruleHyperPlanes.foreach(f => println(f.toString()))
+    //System.exit(1)
+//    hashedRuleSetGlobal = ruleBase4RddIndex.map(r => {
+//      (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )//.filter(f => f._1 < 600L)
+    
+    //println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + hashedRuleSetGlobal.count())
+    
+    //hashedRuleSetGlobal.foreach(f => println("{{{{{{{{{{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}}}}}}}}}}"+f._2.toString()))
+
+//    annRuleModel =
+//      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "jaccard")
+//        .setTables(1)
+//        .setSignatureLength(100)
+//        .setPrimeModulus(739)
+//        .setBands(10)
+//        .train(hashedRuleSetGlobal)
+	//println("*********************((((((((((((((((((((((((()))))))))))))))))))))))))" +ruleMizan.toString)
+	//System.exit(0)
+    //ruleMizan(0).count()
+    //println(ruleMizan.toString())
+    //System.exit(0)
+    //println("Started building rule mizan")
     println("IS ABOUT TO BUILD THE MODEL")
     new EACModel(k)
   }
