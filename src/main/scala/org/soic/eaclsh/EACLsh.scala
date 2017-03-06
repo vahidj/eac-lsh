@@ -76,7 +76,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
   //2D array, indices represent indices of elements in data, each row represents cases in data sorted by their ascending distance to the corresponding case
   //private var neighbors = Array.ofDim[Int](data.count().toInt, data.count().toInt - 1)
   private var uniqs: List[Map[Double, Long]] = List[Map[Double, Long]]()
-  private var ruleUniqs: List[Map[(Double, Double), Int]] = List[Map[(Double, Double), Int]]()
+  private var ruleUniqs: List[Map[(Double, Double), Long]] = List[Map[(Double, Double), Long]]()
   
   
   def msort(array: List[Int], baseIndex:Int): List[Int] = {
@@ -194,24 +194,26 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     val ruleClassStat = ruleBase4RddIndex.map(x => x._2._1).groupBy(identity).mapValues(_.size).collect().toMap
     
 
-    var ruleFeatureStat = List[Map[(Double, Double), Int]]()
-    var ruleFeatureClassStat = List[Map[((Double, Double), (Double, Double)), Int]]()
+    var ruleFeatureStat = List[Map[(Double, Double), Long]]()
+    var ruleFeatureClassStat = List[Map[((Double, Double), (Double, Double)), Long]]()
     for (i <- 0 until data.first().features.size){
-      if (categoricalFeaturesInfo.keySet.contains(i)) {
-        val tmp = ruleBase4RddIndex.map(x => x._2._2(i)).groupBy(identity).mapValues(_.size).collect().toMap
+      if (categoricalFeaturesInfo.keySet.contains(i)) {        
+        val tmp = ruleBase4RddIndex.map(x => x._2._2(i)).countByValue()
+        //val tmp = ruleBase4RddIndex.map(x => x._2._2(i)).groupBy(identity).mapValues(_.size).collect().toMap
         ruleFeatureStat = ruleFeatureStat ::: List(tmp)
-        val tmp2 = ruleBase4RddIndex.map(x => (x._2._2(i), x._2._1)).groupBy(identity).mapValues(_.size).collect().toMap
+        //val tmp2 = ruleBase4RddIndex.map(x => (x._2._2(i), x._2._1)).groupBy(identity).mapValues(_.size).collect().toMap
+        val tmp2 = ruleBase4RddIndex.map(x => (x._2._2(i), x._2._1)).countByValue()
         ruleFeatureClassStat = ruleFeatureClassStat ::: List(tmp2)
       }
       else{
-        ruleFeatureStat = ruleFeatureStat ::: List()
-        ruleFeatureClassStat = ruleFeatureClassStat ::: List()
+        ruleFeatureStat = ruleFeatureStat ::: List(Map[(Double, Double), Long]())
+        ruleFeatureClassStat = ruleFeatureClassStat ::: List(Map[((Double, Double), (Double, Double)), Long]())
       }
     }
 
     ruleUniqs = ruleFeatureStat
     this.ruleHyperPlanes = generateRandomRuleHyperPlanes()
-        
+    
         
 
     val ruleFeatureIt = ruleFeatureStat.iterator
