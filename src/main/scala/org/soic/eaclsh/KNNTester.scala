@@ -189,14 +189,14 @@ object KNNTester {
 	      println("==================================INITIALIZATION================================")
         val knn = new EACLsh(neighbors, best_params(1), best_params(2),
         trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo, readr.numericalFeaturesRange)
-	      pw.write(System.currentTimeMillis() + " started training \n")
+	      //pw.write(System.currentTimeMillis() + " started training \n")
 	      println("==================================TRAIN================================")
 	      knn.train(sc)
-	      pw.write(System.currentTimeMillis() + " started prediction \n")
+	      //pw.write(System.currentTimeMillis() + " started prediction \n")
 	      println("==================================PREDICTION================================")
         val predsAndLabelsLsh = knn.getPredAndLabelsKNNLshOld(sc) //knn.getPredAndLabelsKNNLsh()//knn.getPredAndLabelsLshRetarded()
         println("==================================PREDICTION FINISHED================================" + predsAndLabelsLsh.count())
-        pw.write(System.currentTimeMillis() + " ended prediction \n")
+        //pw.write(System.currentTimeMillis() + " ended prediction \n")
         var resList:List[Double] = List[Double]()
         val err = predsAndLabelsLsh.filter(f => f._1 != f._2).count()
         resList = err :: resList
