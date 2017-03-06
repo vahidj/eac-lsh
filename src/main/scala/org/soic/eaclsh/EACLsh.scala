@@ -249,7 +249,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     }
     
     
-    
+    //println(ruleBase4RddIndex.first().toString())
     val hashedRuleset = ruleBase4RddIndex.map(r => {
       (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
 
@@ -550,10 +550,14 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
   
   def generateRandomRuleHyperPlanes(): List[List[(Double, Double)]] = {
     (1 to hpNo).toList.map { x => 
-      val tmp = ruleUniqs.map(r =>         
-          r.keySet.toList(scala.util.Random.nextInt(r.keySet.size))
-        )
-        tmp
+      val tmp = ruleUniqs.zipWithIndex.map{case (r, ind) =>
+          if (r.keySet.size > 0)
+            r.keySet.toList(scala.util.Random.nextInt(r.keySet.size))
+          else
+            (numericalFeaturesRange.get(ind).get._1 + (numericalFeaturesRange.get(ind).get._2 - numericalFeaturesRange.get(ind).get._1) * scala.util.Random.nextDouble(),
+                numericalFeaturesRange.get(ind).get._1 + (numericalFeaturesRange.get(ind).get._2 - numericalFeaturesRange.get(ind).get._1) * scala.util.Random.nextDouble())
+        }
+       tmp
       }
   }
   
