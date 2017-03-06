@@ -232,8 +232,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
             val ruleClassValsIt = ruleClassStat.keySet.iterator
             while (ruleClassValsIt.hasNext) {
               val ruleClassVal = ruleClassValsIt.next()
-              val tmp1 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v1, ruleClassVal)), 0).toDouble
-              val tmp2 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v2, ruleClassVal)), 0).toDouble
+              val tmp1 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v1, ruleClassVal)), 0L).toInt.toDouble
+              val tmp2 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v2, ruleClassVal)), 0L).toInt.toDouble
               vdm += Math.abs(tmp1 / v1cnt - tmp2 / v2cnt)
               //println(tmp1 + " " + tmp2 + " " + " " + tmp1 + " " +tmp2 +" "+ vdm)
             }
