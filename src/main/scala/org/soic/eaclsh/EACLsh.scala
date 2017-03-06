@@ -423,7 +423,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     hps.map(r => { 
           val dist = getDistance(point.features.toDense, new DenseVector(r.toArray) )
           //log.error(dist)
-          println(dist)
+          //println(dist)
           if (dist < distThresh)
             0
           else
@@ -440,7 +440,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     val pal = new DenseVector(hps.map(r => {
           val dist = getDistance(point.features.toDense, new DenseVector(r.toArray) )
           //log.error(dist)
-          println(dist)
+          //println(dist)
           if (dist < distThresh)
             0.0
           else
