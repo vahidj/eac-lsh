@@ -16,6 +16,8 @@ import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkSession
+
 /**
   * Created by vjalali on 3/19/16.
   */
@@ -41,11 +43,16 @@ class BCReader extends Reader{
   }
 
   def DFTransformed(indexed: DataFrame): RDD[LabeledPoint] = {
+    val spark = SparkSession
+    .builder()
+    .getOrCreate()     
+    val sqlContext = spark.sqlContext
+    import sqlContext.implicits._     
     val transformed = indexed.map(x => new LabeledPoint(x.get(19).asInstanceOf[Double],
       new DenseVector(Array(x.get(10).asInstanceOf[Double], x.get(11).asInstanceOf[Double], x.get(12).asInstanceOf[Double],
         x.get(13).asInstanceOf[Double], x.get(14).asInstanceOf[Double], x.get(15).asInstanceOf[Double],
         x.get(16).asInstanceOf[Double], x.get(17).asInstanceOf[Double], x.get(18).asInstanceOf[Double]))))
-    return transformed
+    return transformed.toJavaRDD
   }
   def Indexed(FilePath:String, sc: SparkContext): DataFrame= {
     val rawData = sc.textFile(FilePath)

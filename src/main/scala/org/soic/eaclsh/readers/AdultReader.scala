@@ -16,6 +16,7 @@ import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkSession
 
 // reads adult data set
 class AdultReader extends Reader {
@@ -69,13 +70,18 @@ class AdultReader extends Reader {
   }
    
    def DFTransformed(indexed: DataFrame): RDD[LabeledPoint] = {
+    val spark = SparkSession
+    .builder()
+    .getOrCreate()     
+    val sqlContext = spark.sqlContext
+    import sqlContext.implicits._      
     val transformed = indexed.map(x => new LabeledPoint(x.get(23).asInstanceOf[Double],
       new DenseVector(Array(x.get(0).asInstanceOf[Double],x.get(15).asInstanceOf[Double],x.get(2).asInstanceOf[Double],
         x.get(16).asInstanceOf[Double], x.get(4).asInstanceOf[Double], x.get(17).asInstanceOf[Double],
         x.get(18).asInstanceOf[Double], x.get(19).asInstanceOf[Double], x.get(20).asInstanceOf[Double],
         x.get(21).asInstanceOf[Double], x.get(10).asInstanceOf[Double], x.get(11).asInstanceOf[Double],
         x.get(12).asInstanceOf[Double], x.get(22).asInstanceOf[Double]))))
-    return transformed
+    return transformed.toJavaRDD
   }
 
   override def numberOfClasses: Int = 2

@@ -16,6 +16,8 @@ import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkSession
+
 // reads car dataset
 class CarReader extends Reader {
 
@@ -34,17 +36,22 @@ class CarReader extends Reader {
   }
   
   def DFTransformed(indexed: DataFrame): RDD[LabeledPoint] = {
+    val spark = SparkSession
+    .builder()
+    .getOrCreate()     
+    val sqlContext = spark.sqlContext
+    import sqlContext.implicits._     
     val transformed = indexed.map(x => new LabeledPoint(x.get(13).asInstanceOf[Double],
       new DenseVector(Array(x.get(7).asInstanceOf[Double], x.get(8).asInstanceOf[Double], x.get(9).asInstanceOf[Double],
         x.get(10).asInstanceOf[Double], x.get(11).asInstanceOf[Double], x.get(12).asInstanceOf[Double]))))
-    return transformed
+    return transformed.toJavaRDD
   }
   def Indexed(FilePath:String, sc: SparkContext): DataFrame= {
     val rawData = sc.textFile(FilePath)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     val schema = StructType(dataSchema.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
     val rowRDD = rawData.map(_.split(",")).map(p => Row(p(0), p(1), p(2), p(3), p(4), p(5), p(6)))
-    val carDataFrame = sqlContext.createDataFrame(rowRDD, schema)
+    val carDataFrame = sqlContext.createDataFrame(rowRDD.toJavaRDD, schema)
     var indexer = new StringIndexer().setInputCol("buying").setOutputCol("buyingIndex").fit(carDataFrame)
     var indexed = indexer.transform(carDataFrame)
     indexer = new StringIndexer().setInputCol("maint").setOutputCol("maintIndex").fit(indexed)
