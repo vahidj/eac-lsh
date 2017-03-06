@@ -255,7 +255,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     val hashedRuleset = ruleBase4RddIndex.map(r => {
       (r._1, getRuleHashBits(r._2._2, ruleHyperPlanes)) } )
 
-    val tmpAnnRuleModel =
+    val annRuleModel =
       new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "hamming")
         .setTables(1)
         .setSignatureLength(8)
