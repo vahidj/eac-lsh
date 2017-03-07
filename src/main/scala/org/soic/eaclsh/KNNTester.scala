@@ -93,7 +93,7 @@ object KNNTester {
     val pw = new PrintWriter(new File("results"+cts+".txt"))
     pw.write(readr.getClass.toString() + " " + method + " " + System.currentTimeMillis() + " #neighbors= " + neighbors + "\n")
     
-    for (i <- 0 until 1) {
+    for (i <- 0 until 10) {
       //val splits = transformed.randomSplit(Array(0.1, 0.9))(0).randomSplit(Array(0.8, 0.2))
       val splits = transformed.randomSplit(Array(0.8, 0.2))
       val (trainingData, testData) = (splits(0), splits(1))
