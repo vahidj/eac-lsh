@@ -84,7 +84,7 @@ object KNNTester {
     
     //val readr = ActivityReaderNew
     //val transformed = readr.readData(sc, EACLshConfig.BASEPATH + "dataset/" + readr.inputFileName , "x y z user model device")
-    val readr = new BalanceReader
+    val readr = new CreditReader
     val indexed = readr.Indexed(EACLshConfig.BASEPATH + "dataset/" + readr.inputFileName /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     var transformed = readr.DFTransformed(indexed)
     
