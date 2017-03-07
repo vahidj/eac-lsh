@@ -30,6 +30,7 @@ import org.soic.eaclsh.readers.ActivityReader
 import org.apache.spark.sql.SparkSession
 import org.soic.eaclsh.readers.ActivityReaderNew
 import org.soic.eaclsh.readers.AdultReader
+import org.soic.eaclsh.readers.BankruptcyReader
 
 /**
   * Created by vjalali on 2/27/16.
@@ -84,7 +85,7 @@ object KNNTester {
     
     //val readr = ActivityReaderNew
     //val transformed = readr.readData(sc, EACLshConfig.BASEPATH + "dataset/" + readr.inputFileName , "x y z user model device")
-    val readr = new CreditReader
+    val readr = new BankruptcyReader
     val indexed = readr.Indexed(EACLshConfig.BASEPATH + "dataset/" + readr.inputFileName /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     var transformed = readr.DFTransformed(indexed)
     
