@@ -35,5 +35,5 @@ object ActivityReaderNew {
 
   def dataSchema: String = "x y z user model device gt"
 
-  def inputFileName: String = "activity/activityCleaned2.data"  
+  def inputFileName: String = "activity/activityCleaned1k.data"  
 }

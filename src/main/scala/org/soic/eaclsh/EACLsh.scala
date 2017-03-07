@@ -387,14 +387,26 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
 
   }  
   
-  def getPredAndLabelsKNNLsh(): RDD[(Double,Double)] = {
+  def getPredAndLabelsKNNLsh(sc:SparkContext): RDD[(Double,Double)] = {
     println("========================>" + this.testHashedDataset.count() + "===========>" + this.hashedDataset.count())
-    val tapale = this.testHashedDataset.join(this.hashedDataset)
-    .map(x => x._2)
+    val th = sc.broadcast(testHashedDataset.collectAsMap())
+    
+    val tapale = this.hashedDataset.map(f => (th.value.get(f._1).getOrElse((-9, -9.0)), f._2))
+    .filter(f => f._1 != (-9, -9.0))
     .distinct()
     .map(f => (f._1, f._2._2))
     .groupByKey()
-    .map(f => (f._2.take(10).groupBy(identity).maxBy(_._2.size)._1, f._1._2))
+    .map(f => (f._2.groupBy(identity).maxBy(_._2.size)._1, f._1._2))
+    
+    
+//    val tapale = this.testHashedDataset.join(this.hashedDataset)
+//    .map(x => x._2)
+//    .distinct()
+//    .map(f => (f._1, f._2._2))
+//    .groupByKey()
+//    .map(f => (f._2.groupBy(identity).maxBy(_._2.size)._1, f._1._2))
+    
+    //.map(f => (f._2.take(10).groupBy(identity).maxBy(_._2.size)._1, f._1._2))
 //    val log = LogManager.getRootLogger
 //    log.setLevel(Level.WARN)
 //    val th = sc.broadcast(testHashedDataset.collect())
@@ -539,8 +551,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
   }  
   
   def getHashBitsMine(point: (Long, LabeledPoint), hps: List[List[Double]]): Array[(String,(Long, Double))] = {
-    (1 to hpNo by 100).toList.map { x =>
-      (x.toString() + (1 to 100).toList.map(r => {
+    (1 to hpNo by 10).toList.map { x =>
+      (x.toString() + (1 to 10).toList.map(r => {
         val dist = getDistance(point._2.features.toDense, new DenseVector(hps(x+r-2).toArray))
         if (dist < distThresh)
             "0"
@@ -713,6 +725,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     
     uniqs = featureStat
     //println("{{{{{{{{{{{{{{}}}}}}}}}}}}}}" + uniqs.toString() + "           : " + categoricalFeaturesInfo.keySet.toString())
+    println("mizan ready =====================================>" + mizan(0).toString())
     
     val hyperPlanes:List[List[Double]] = generateRandomHyperPlanes()
     //hyperPlanes.foreach { x => println(x.toString()) }
@@ -724,15 +737,22 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
 //      
 //    
 //    this.testHashedDataset = testWithIndex.flatMap(r => getHashBitsMine(r, hyperPlanes) ).cache()
-    
+
+//    inja      
     this.hashedDataset2 = dataWithIndex.map(r => {
       //println("test " + r._1.toString() + " " + r._2.toString())
       //println(getHashBits(r._2, hyperPlanes).toString())
       (r._1, getHashBits(r._2, hyperPlanes)) } ).cache()
       
     
-    this.testHashedDataset2 = testWithIndex.map(r => (r._1, getHashBits(r._2, hyperPlanes) )).cache()    
-    
+    this.testHashedDataset2 = testWithIndex.map(r => (r._1, getHashBits(r._2, hyperPlanes) )).cache()
+//    this.testHashedDataset = testWithIndex.flatMap(r => getHashBitsMine(r, hyperPlanes) ).cache()
+    println("testHashedDataset ready =======>" + testHashedDataset.take(10).toString())
+    this.annModel =
+      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "hamming")
+        .setTables(1)
+        .setSignatureLength(8)
+        .train(hashedDataset2)
     //this.testHashedDataset.cache()
     //hashedDataset.cache()
     
@@ -763,11 +783,8 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
 //        .setBands(4)
 //        .train(hashedDataset)
 
-    this.annModel =
-      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "hamming")
-        .setTables(1)
-        .setSignatureLength(8)
-        .train(hashedDataset2)
+
+        
 //    this.annModel =
 //      new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "euclidean")
 //        .setTables(1)

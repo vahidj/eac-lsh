@@ -44,8 +44,9 @@ object KNNTester {
 
   def main(args: Array[String]) = {
     val method = args(0)
-    val fileName = args(1)
-    val neighbors = args(2).toInt
+    //val fileName = args(1)
+    val neighbors = args(1).toInt
+    //val turns = args(2).toInt
     
     val arcf = Array(("spark.streaming.unpersist","true"),("spark.executor.memory","24g"),("spark.mesos.coarse","true"), 
         ("spark.serializer", "org.apache.spark.serializer.KryoSerializer"), ("spark.kryoserializer.buffer", "128k"), 
@@ -79,7 +80,9 @@ object KNNTester {
 //    var transformed = readr.DFTransformed(indexed)
     
     val readr = ActivityReaderNew
-    var transformed = readr.readData(sc, EACLshConfig.BASEPATH + "dataset/activity/" + fileName , "x y z user model device")
+    val transformed = readr.readData(sc, EACLshConfig.BASEPATH + "dataset/" + readr.inputFileName , "x y z user model device")
+    //val trainingData = readr.readData(sc, EACLshConfig.BASEPATH + "dataset/activity/activityCleanedTrain.data" , "x y z user model device")
+    //val testData = readr.readData(sc, EACLshConfig.BASEPATH + "dataset/activity/activityCleanedTest.data" , "x y z user model device")
     //transformed.take(100).foreach { x => println(x.label + " " + x.features.toString()) }
     //System.exit(1)
     //val output = readr.Output(indexed)
@@ -88,12 +91,15 @@ object KNNTester {
     val cts = System.currentTimeMillis.toString()
     
     val pw = new PrintWriter(new File("results"+cts+".txt"))
-    pw.write(readr.getClass.toString() + " " + method + " " + System.currentTimeMillis() + " " + fileName + " #neighbors= " + neighbors + "\n")
+    pw.write(readr.getClass.toString() + " " + method + " " + System.currentTimeMillis() + " #neighbors= " + neighbors + "\n")
     
-    for (i <- 0 until 10) {
+    for (i <- 0 until 1) {
       //val splits = transformed.randomSplit(Array(0.1, 0.9))(0).randomSplit(Array(0.8, 0.2))
       val splits = transformed.randomSplit(Array(0.8, 0.2))
       val (trainingData, testData) = (splits(0), splits(1))
+//      trainingData.saveAsTextFile("/user/v0j0017/tmp/dataset/activity/fulltraining.data")
+//      testData.saveAsTextFile("/user/v0j0017/tmp/dataset/activity/fulltest.data")
+//      System.exit(0)
       //val trainingData = trainingData2.randomSplit(Array(0.01, 0.99))(0)
       //val testData = testData2.randomSplit(Array(0.01, 0.99))(0)
       //trainingData.foreach { x => println(x.toString()) }
@@ -198,7 +204,9 @@ object KNNTester {
         println("==================================PREDICTION FINISHED================================" + predsAndLabelsLsh.count())
         //pw.write(System.currentTimeMillis() + " ended prediction \n")
         var resList:List[Double] = List[Double]()
+        val all = predsAndLabelsLsh.count()
         val err = predsAndLabelsLsh.filter(f => f._1 != f._2).count()
+        resList = all :: resList
         resList = err :: resList
         val metrics = new MulticlassMetrics(predsAndLabelsLsh)
         resList = metrics.weightedPrecision :: resList 
@@ -216,7 +224,9 @@ object KNNTester {
         }
         
         var resList:List[Double] = List[Double]()
+        val all = predsAndLabels.count()
         val err = predsAndLabels.filter(f => f._1 != f._2).count()
+        resList = all :: resList
         resList = err :: resList
         val metrics = new MulticlassMetrics(predsAndLabels)
         resList = metrics.weightedPrecision :: resList 
