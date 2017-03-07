@@ -747,7 +747,7 @@ class EACLsh(private var k: Int, private val rno: Int, private val ruleRadius: I
     
     this.testHashedDataset2 = testWithIndex.map(r => (r._1, getHashBits(r._2, hyperPlanes) )).cache()
 //    this.testHashedDataset = testWithIndex.flatMap(r => getHashBitsMine(r, hyperPlanes) ).cache()
-    println("testHashedDataset ready =======>" + testHashedDataset.take(10).toString())
+    println("testHashedDataset ready =======>" + testHashedDataset2.take(10).toString())
     this.annModel =
       new com.github.karlhigley.spark.neighbors.ANN(dimensions = hpNo, measure = "hamming")
         .setTables(1)
