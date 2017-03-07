@@ -81,8 +81,12 @@ object KNNTester {
 //    val indexed = readr.Indexed(EACLshConfig.BASEPATH + "dataset/" + readr.inputFileName /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
 //    var transformed = readr.DFTransformed(indexed)
     
-    val readr = ActivityReaderNew
-    val transformed = readr.readData(sc, EACLshConfig.BASEPATH + "dataset/" + readr.inputFileName , "x y z user model device")
+    //val readr = ActivityReaderNew
+    //val transformed = readr.readData(sc, EACLshConfig.BASEPATH + "dataset/" + readr.inputFileName , "x y z user model device")
+    val readr = new CarReader
+    val indexed = readr.Indexed(EACLshConfig.BASEPATH + "dataset/" + readr.inputFileName /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
+    var transformed = readr.DFTransformed(indexed)
+    
     //val trainingData = readr.readData(sc, EACLshConfig.BASEPATH + "dataset/activity/activityCleanedTrain.data" , "x y z user model device")
     //val testData = readr.readData(sc, EACLshConfig.BASEPATH + "dataset/activity/activityCleanedTest.data" , "x y z user model device")
     //transformed.take(100).foreach { x => println(x.label + " " + x.features.toString()) }
