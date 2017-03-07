@@ -95,7 +95,7 @@ class CreditReader extends Reader{
 
   override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]((1,11.83827),(2,5.027077),(7,3.37112),(10,4.968497),(13,168.2968),(14,5253.279))
   
-  override def numericalFeaturesRange: Map[Int, (Double, Double)] = Map[Int, (Double, Double)]()
+  override def numericalFeaturesRange: Map[Int, (Double, Double)] = Map[Int, (Double, Double)]((1, (0,1)),(2, (0,1)),(7, (0,1)), (10, (0,1)), (13, (0,1)), (14, (0,1)) )
 
   override def dataSchema: String = "a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16"
 
