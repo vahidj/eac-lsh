@@ -159,7 +159,7 @@ object KNNTester {
 //          readr.numberOfClasses, readr.categoricalFeaturesInfo, NumTrees, featureSubsetStrategy, Impurity, MaxDepth, MaxBins, 10)
         
         val model_rf = RandomForest.trainClassifier(trainingData.toJavaRDD(),
-          readr.numberOfClasses, readr.categoricalFeaturesInfo2, 10, "auto", "entropy", 4, 100, 10)
+          readr.numberOfClasses, readr.categoricalFeaturesInfo, 10, "auto", "entropy", 4, 100, 10)
         
         val predAndLabelRF = testData.map {
           point => val prediction = model_rf.predict(point.features)
