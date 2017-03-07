@@ -46,6 +46,8 @@ object KNNTester {
     val method = args(0)
     //val fileName = args(1)
     val neighbors = args(1).toInt
+    val rulesRadius = args(2).toInt
+    val rulesNo = args(3).toInt
     //val turns = args(2).toInt
     
     val arcf = Array(("spark.streaming.unpersist","true"),("spark.executor.memory","24g"),("spark.mesos.coarse","true"), 
@@ -174,7 +176,7 @@ object KNNTester {
       }
       else if (method.equals("eaclsh"))
       {
-	      val best_params = List(10, 10, 10)
+	      val best_params = List(neighbors, rulesNo, rulesRadius)
         val knn = new EACLsh(best_params(0), best_params(1), best_params(2),
         trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo, readr.numericalFeaturesRange)  
 	      knn.train(sc)
